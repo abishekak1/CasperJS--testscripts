@@ -1,0 +1,163 @@
+  
+  casper.test.begin('Testing ToDoMVC', 10, function(test){
+       
+      casper.start('http://todomvc.com/examples/angularjs/#/');
+
+
+
+
+
+      //1.  I want to add a To-do item
+
+  casper.then(function() {
+
+                            casper.waitForSelector("form #new-todo", function() {
+                            this.sendKeys('#new-todo','FirstItem');
+                            this.sendKeys('#new-todo', casper.page.event.key.Enter);
+                            links = this.evaluate(getTodos);
+                            this.echo("Number of Todo's in the list is "+links.length);
+
+                            });
+                    
+                    });
+
+
+
+
+  // 2.I want to edit the content of an existing To-do item
+
+  // First I checked if there were items in the todolist, and then edited the item
+
+  casper.waitForSelector("#todo-list label",
+                        function success() {
+
+                                            test.assertExists("#todo-list label");
+                                            this.mouse.doubleclick("#todo-list label");
+            
+                                            this.echo("There are items in the todo list")
+                                            },
+                        function fail() {
+                                           this.echo("FAIL There are no items in the todo list");
+                                         });
+
+ 
+  casper.then(function () {
+    
+                            this.mouseEvent('dblclick', '#todo-list li:nth-child(1) label');
+                            this.page.sendEvent('keypress', ', edited ');
+                            this.page.sendEvent('keypress', this.page.event.key.Enter);
+    
+                            this.test.assertEquals(this.fetchText('#todo-list li:nth-child(1) label'), 'FirstItem, edited', 'Editing Todo\n');
+
+    
+  });
+
+
+
+  // 3. I can complete a To-do by clicking inside the circle UI to the left of the To-do
+
+  casper.then(function () {
+      
+                             this.click('#todo-list li:nth-child(1) input[type=checkbox]');
+  
+                             this.test.assertVisible('#clear-completed', 'Todo has been completed');
+
+                          });
+
+ 
+  //4. I can re-activate a completed To-do by clicking inside the circle UI
+
+  casper.then(function () {
+      
+      this.click('#todo-list li:nth-child(1) input[type=checkbox]');
+  // TODO check button string
+      this.test.assertVisible('#clear-completed', 'Todo has been re-activated..');
+
+  });
+
+  //5. I can add a second To-do
+
+  casper.then(function() {
+
+                            casper.waitForSelector("form #new-todo", function() {
+                            this.sendKeys('#new-todo','SecondItem');
+                            this.sendKeys('#new-todo', casper.page.event.key.Enter);
+                            links = this.evaluate(getTodos);
+                            test.assert((links.length === 2), 'There are 2 items in the list');
+                            this.echo("Number of Todo's in the list is "+links.length);
+
+                            });
+                    
+                    });
+
+
+  //6. I can complete all active To-dos by clicking the down arrow at the top-left of the UI
+
+  casper.then(function(){
+
+                          this.click('#toggle-all');
+                          this.test.assertVisible('#clear-completed', 'All todos have been completed');
+
+                        });
+
+
+  //7. I can filter the visible To-dos by Completed state
+
+  casper.thenOpen('http://todomvc.com/examples/angularjs/#/completed',
+                  function() {
+                               
+                               this.test.assertEquals(this.fetchText('#todo-list li:nth-child(1) label'), 'FirstItem, edited', 'Completed Page\n');
+                               links = this.evaluate(getTodos);
+                               this.echo("Number of Completed todo's in the list is "+links.length);
+
+
+                              });
+
+  //8.  I can clear a single To-do item from the list completely by clicking the Close icon.
+
+  casper.waitForSelector("#todo-list label",
+         function success() {
+
+                              test.assertExists("#todo-list label");
+                              this.mouse.click('#todo-list li .destroy');
+                              links = this.evaluate(getTodos);
+            
+            
+                              this.echo("PASS Item Deleted")
+                              this.echo("Number of Todo's in the list is "+links.length);
+                            },
+         
+         function fail() {
+                           this.echo("FAIL There are no items in the todo list");
+                         }); 
+
+
+
+
+    //9. I can clear all completed To-do items from the list completely
+
+    casper.then(function(){
+
+                          
+                          this.test.assertVisible('#clear-completed', 'Clear complete todos button active');
+                          this.click("button#clear-completed");
+                          links = this.evaluate(getTodos);
+                          test.assert((links.length === 0), 'Cleared all Completed tasks');
+                          this.echo("Number of  Completed Todo's in the list is "+links.length);
+
+                        });
+
+    
+    
+
+    function getTodos () {
+      var todos = document.querySelectorAll('#todo-list li'); 
+      return todos;
+  }
+
+
+
+  casper.run(function(){
+          test.done();
+      })
+  });
